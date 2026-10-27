@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 진로·학업설계 상담 연수 퀴즈</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .quiz-container { display: none; }
+        .quiz-container.active { display: block; animation: fadeIn 0.5s; }
+        .option-label { transition: all 0.2s ease-in-out; }
+        .option-label:hover { background-color: #e0e7ff; border-color: #818cf8; }
+        input[type="radio"]:checked + div { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-answer { background-color: #dcfce7 !important; color: #166534 !important; border-color: #22c55e !important; }
+        .wrong-answer { background-color: #fee2e2 !important; color: #991b1b !important; border-color: #ef4444 !important; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-900 text-white shadow-md py-4 px-6 flex-shrink-0">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight"><i class="fas fa-graduation-cap mr-2"></i> 진로·학업설계 상담 역량 퀴즈</h1>
+                <p class="text-sm text-indigo-300 mt-1">2026 고교학점제 기반 종합 안내서 복습</p>
+            </div>
+            <div id="score-display" class="hidden font-bold text-lg bg-indigo-800 px-4 py-2 rounded-lg border border-indigo-700">
+                점수: <span id="current-score">0</span> / 20
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            
+            <!-- Intro Screen -->
+            <div id="intro-screen" class="p-8 md:p-12 text-center quiz-container active">
+                <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-4xl mb-6">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900 mb-4">연수 자료 핵심 점검 퀴즈</h2>
+                <p class="text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
+                    이 퀴즈는 제공된 '2026 고등학교 진로·학업설계 상담 종합 안내서' 내용을 바탕으로 제작된 20문항의 객관식 테스트입니다. 고교학점제, 진로설계, GROW 모델, AI 활용 등 주요 개념을 확인해보세요.
+                </p>
+                <button onclick="startQuiz()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full transition-colors text-lg shadow-md">
+                    퀴즈 시작하기 <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div id="quiz-screen" class="quiz-container flex flex-col h-full">
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 h-2">
+                    <div id="progress-bar" class="bg-indigo-500 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+
+                <div class="p-6 md:p-10 flex-1">
+                    <div class="flex justify-between items-end mb-6 border-b pb-4">
+                        <span class="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full" id="question-counter">문제 1 / 20</span>
+                        <span class="text-xs text-gray-500" id="question-category">카테고리</span>
+                    </div>
+                    
+                    <h3 id="question-text" class="text-xl md:text-2xl font-bold text-gray-800 mb-8 leading-snug">질문 내용이 여기에 표시됩니다.</h3>
+                    
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options injected via JS -->
+                    </div>
+
+                    <!-- Explanation Area (Hidden until answered) -->
+                    <div id="explanation-box" class="mt-8 hidden border-l-4 p-4 rounded-r-lg">
+                        <h4 id="explanation-title" class="font-bold mb-2 flex items-center text-lg">결과</h4>
+                        <p id="explanation-text" class="text-sm text-gray-700 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-6 border-t flex justify-between items-center">
+                    <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-2 text-gray-600 bg-white border rounded-lg hover:bg-gray-100 hidden disabled:opacity-50 font-medium">
+                        <i class="fas fa-chevron-left mr-2"></i> 이전
+                    </button>
+                    <button id="next-btn" onclick="nextQuestion()" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ml-auto font-medium shadow-sm transition-colors" disabled>
+                        다음 <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                    <button id="result-btn" onclick="showResults()" class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 ml-auto hidden font-bold shadow-sm transition-colors">
+                        결과 보기 <i class="fas fa-flag-checkered ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div id="result-screen" class="p-8 md:p-12 text-center quiz-container">
+                <div id="result-icon" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto text-5xl mb-6">
+                    <!-- Icon injected via JS -->
+                </div>
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">퀴즈 완료!</h2>
+                <p class="text-gray-600 mb-6" id="result-message">수고하셨습니다.</p>
+                
+                <div class="bg-gray-50 rounded-xl border p-6 mb-8 max-w-sm mx-auto">
+                    <p class="text-sm text-gray-500 font-semibold mb-1">최종 점수</p>
+                    <p class="text-5xl font-black text-indigo-600"><span id="final-score">0</span><span class="text-2xl text-gray-400 font-bold"> / 20</span></p>
+                </div>
+
+                <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full transition-colors">
+                    다시 풀기 <i class="fas fa-redo ml-2"></i>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            {
+                category: "대입전형과 진로·학업설계",
+                question: "고교학점제에서 학생이 졸업하기 위해 3년간 누적해야 하는 최소 학점은 얼마인가?",
+                options: ["180학점", "192학점", "204학점", "216학점"],
+                answer: 1,
+                explanation: "고교학점제 졸업 요건은 총 192학점 이상 취득 및 학년별 수업 일수의 2/3 이상 출석입니다."
+            },
+            {
+                category: "대입전형과 진로·학업설계",
+                question: "고교학점제에서 공통과목의 미이수를 방지하기 위한 학업 성취율 최소 기준은?",
+                options: ["30% 이상", "40% 이상", "50% 이상", "60% 이상"],
+                answer: 1,
+                explanation: "공통과목 이수 기준은 출석률 2/3 이상과 성취율 40% 이상입니다."
+            },
+            {
+                category: "대입전형과 진로·학업설계",
+                question: "대학 전공자율선택제 중 '유형 1(자유전공)'의 특징으로 가장 알맞은 것은?",
+                options: [
+                    "계열 또는 단과대 단위로만 모집하여 전공을 선택한다.",
+                    "입학 후 대학 내 모든 전공(보건·사범 등 제외)을 100% 자율로 선택한다.",
+                    "1학년 때는 교양만 듣고 2학년 때 성적순으로 전공이 배정된다.",
+                    "특정 학과로 입학 후 유사 학과로만 전과가 가능하다."
+                ],
+                answer: 1,
+                explanation: "유형 1(자유전공)은 전공을 정하지 않고 모집하며, 입학 후 보건/사범 등을 제외한 모든 전공을 100% 자율로 선택할 수 있습니다."
+            },
+            {
+                category: "진로 설계의 의미",
+                question: "4차 산업혁명 시대에 강조되는 '진로구성주의(Career Construction Theory)' 관점에 대한 설명으로 옳지 않은 것은?",
+                options: [
+                    "진로는 자신만의 이야기를 설계하고 구성해 나가는 역동적 과정이다.",
+                    "개인 특성과 직업의 완벽한 적합성을 찾아 단 한 번의 올바른 선택을 하는 것을 강조한다.",
+                    "일과 관계를 통한 자기 구성에 초점을 맞춘다.",
+                    "평생에 걸쳐 변화에 적응하고 재설계하는 진로 적응성이 요구된다."
+                ],
+                answer: 1,
+                explanation: "전통적 진로관이 한 번의 선택을 강조했다면, 진로구성주의는 끊임없이 자신만의 이야기를 구성하고 변화에 적응하는 과정을 강조합니다."
+            },
+            {
+                category: "진로미결정 및 의사결정",
+                question: "진로미결정 요인 중 '유능감 부족 및 낮은 결과기대'를 보이는 학생을 위한 적절한 지도 방안은?",
+                options: [
+                    "마음속 선호의 우선순위를 변별하도록 객관적 정보를 대량 제공한다.",
+                    "최고의 선택이라는 강박에서 벗어나도록 연결과 실험의 관점을 제시한다.",
+                    "잠정적 목표의 기한을 정하고 순차적 제거법을 연습시킨다.",
+                    "작은 실천 계획을 세워 성취 경험을 갖도록 촉진하고 자기효능감을 높인다."
+                ],
+                answer: 3,
+                explanation: "유능감이 부족한 학생에게는 작은 성공 경험(성취 경험)을 제공하여 스스로 해낼 수 있다는 자기효능감을 높여주는 것이 가장 효과적입니다."
+            },
+            {
+                category: "진로미결정 및 의사결정",
+                question: "진로의사결정 CASVE 모형의 순서로 알맞은 것은?",
+                options: [
+                    "분석 → 의사소통 → 종합 → 평가 → 실행",
+                    "의사소통 → 분석 → 종합 → 평가 → 실행",
+                    "의사소통 → 종합 → 평가 → 분석 → 실행",
+                    "분석 → 평가 → 종합 → 의사소통 → 실행"
+                ],
+                answer: 1,
+                explanation: "CASVE 모형은 의사소통(Communication), 분석(Analysis), 종합(Synthesis), 평가(Valuing), 실행(Execution)의 순환적 과정입니다."
+            },
+            {
+                category: "GROW 모델 지도",
+                question: "GROW 모델 중 \"고려해 볼 수 있는 다른 길은 없을까? 각 선택지의 장단점은 무엇일까?\"라고 묻는 단계는?",
+                options: ["Goal (목표 설정)", "Reality (현실 점검)", "Options (대안 탐색)", "Will (실행 계획)"],
+                answer: 2,
+                explanation: "선택지를 탐색하고 장단점을 비교하는 단계는 'Options(대안 탐색)' 단계입니다."
+            },
+            {
+                category: "GROW 모델 지도",
+                question: "의사결정 지원 도구 중, 중요하게 생각하는 기준(예: 안정성, 학업부담)에 맞지 않는 대안을 하나씩 제거해 나가는 방법은?",
+                options: ["쌍대비교법", "순차적 제거법(EBA)", "의사결정 매트릭스", "브레인스토밍"],
+                answer: 1,
+                explanation: "순차적 제거법(Elimination By Aspects)은 기준에 미달하는 대안을 차례대로 소거하여 최종안을 도출하는 방법입니다."
+            },
+            {
+                category: "진로 변경 지도",
+                question: "학생의 진로 변경을 바라보는 가장 바람직한 관점은?",
+                options: [
+                    "의지 부족이나 변덕으로 인한 실패의 과정이다.",
+                    "생활기록부 일관성을 훼손하므로 최대한 막아야 한다.",
+                    "다양한 경험을 통해 적합한 방향을 재조정하는 유연한 환경 적응 과정이다.",
+                    "대학 진학에 불리하므로 무조건 기존 진로를 유지하도록 설득해야 한다."
+                ],
+                answer: 2,
+                explanation: "진로 변경은 실패나 변덕이 아니라, 다양한 경험 속에서 자신에게 맞는 방향을 찾아가는 자연스럽고 유연한 적응 과정으로 보아야 합니다."
+            },
+            {
+                category: "진로 변경 지도",
+                question: "완전히 다른 계열(예: 공학 → 인문/예술)로 진로를 변경한 학생에게 가장 필요한 학업 설계 전략은?",
+                options: [
+                    "기존 계열의 과목 수강을 완전히 중단한다.",
+                    "기존 활동을 무시하고 새로운 활동만 집중적으로 기록한다.",
+                    "기존 계열과 새 계열을 연결하는 '브릿지 활동'을 설계한다.",
+                    "자퇴 후 검정고시를 준비하게 한다."
+                ],
+                answer: 2,
+                explanation: "다른 계열로 변경 시 전환의 이유를 설명할 수 있도록 두 계열을 융합하는 브릿지 활동(예: 예술공학, 기술경영)을 설계하는 것이 좋습니다."
+            },
+            {
+                category: "교과목 선택 가이드",
+                question: "2022 개정 교육과정에서 교과별 학문 영역 내의 주요 학습 내용 이해를 목적으로 하며, 상대평가(5등급)와 절대평가(성취도)가 병기되는 과목 유형은?",
+                options: ["공통 과목", "일반 선택 과목", "진로 선택 과목", "융합 선택 과목"],
+                answer: 1,
+                explanation: "일반 선택 과목은 교과별 학문 영역의 주요 내용을 다루며, 5등급 상대평가와 성취도가 함께 산출됩니다."
+            },
+            {
+                category: "교과목 선택 가이드",
+                question: "위계성을 갖는 교과(수학, 과학)의 권장 이수 순서로 알맞은 것은?",
+                options: [
+                    "진로 선택 과목 선이수 후 일반 선택 과목 이수",
+                    "일반 선택 과목 선이수 후 진로 선택 과목 이수",
+                    "융합 선택 과목 선이수 후 공통 과목 이수",
+                    "순서에 상관없이 흥미 위주로 동시 이수"
+                ],
+                answer: 1,
+                explanation: "수학과 과학은 학문의 위계가 뚜렷하므로 일반 선택 과목을 먼저 이수한 후 심화인 진로 선택 과목을 이수하는 것을 권장합니다."
+            },
+            {
+                category: "학업 및 성적 관리",
+                question: "학생부종합전형 평가의 핵심인 '탐구 역량'이 드러나는 기록의 5요소에 해당하지 않는 것은?",
+                options: ["질문 (문제의식)", "분석 및 개념 적용", "결과 및 표현", "교과서 단순 암기"],
+                answer: 3,
+                explanation: "탐구 역량 기록의 5요소는 질문, 조사, 분석 및 개념 적용, 결과 및 표현, 확장입니다. 단순 암기는 탐구 역량을 보여주지 못합니다."
+            },
+            {
+                category: "학업 및 성적 관리",
+                question: "5등급 상대평가 체제에서 성취도는 'A'를 받았으나 등급은 '3등급'인 학생의 성적표를 가장 잘 해석한 것은?",
+                options: [
+                    "시험 난이도가 매우 높아 학생들의 성취도가 전반적으로 낮았다.",
+                    "시험 난이도가 낮아 최상위권 경쟁이 매우 치열했음을 시사한다.",
+                    "학생이 수행평가를 전혀 제출하지 않았다.",
+                    "학교가 성적 산출에 오류를 범했다."
+                ],
+                answer: 1,
+                explanation: "성취도 A(절대적 기준 통과)를 받았음에도 3등급(상위 10% 밖)이 나왔다는 것은, 90점 이상을 받은 학생이 많아 변별력이 낮고 경쟁이 치열했음을 의미합니다."
+            },
+            {
+                category: "학업 및 성적 관리",
+                question: "교과 전형의 정성 평가 확대로 인해 중요해진 성적 관리 태도는?",
+                options: [
+                    "전공 연계 과목이라도 인원수가 적으면 무조건 피한다.",
+                    "점수 따기 쉬운 교양 과목 위주로만 수강한다.",
+                    "전공 연계 과목(특히 심화, 진로선택)을 기피하지 않고 도전적으로 이수한다.",
+                    "내신 등급 산출이 없는 과목은 아예 수강하지 않는다."
+                ],
+                answer: 2,
+                explanation: "최근 입시에서는 단순 내신 숫자보다, 학생이 희망 전공과 관련된 어려운 과목을 기피하지 않고 도전적으로 이수했는지(과목 선택의 질)를 중요하게 평가합니다."
+            },
+            {
+                category: "AI 활용 진로·학업설계",
+                question: "제미나이(Gemini)를 기반으로 특정한 역할, 지식, 말투를 미리 가르쳐 저장해둔 '맞춤형 AI 비서'를 일컫는 용어는?",
+                options: ["Prompt", "Gem", "Token", "Agent"],
+                answer: 1,
+                explanation: "안내서에서는 반복 업무를 일관되게 처리하기 위해 미리 역할을 설정해둔 맞춤형 AI 비서를 'Gem'이라고 설명합니다."
+            },
+            {
+                category: "AI 활용 진로·학업설계",
+                question: "강력한 Gem 지침 작성을 위한 5요소에 포함되지 않는 것은?",
+                options: ["역할(Role)", "대상(Target)", "감정(Emotion)", "출력형식(Format)"],
+                answer: 2,
+                explanation: "프롬프트(지침) 작성 5요소는 역할(Role), 대상(Target), 작업(Task), 출력형식(Format), 제약조건(Limits)입니다."
+            },
+            {
+                category: "AI 활용 진로·학업설계",
+                question: "AI 활용 상담 시 주의해야 할 '할루시네이션(Hallucination)'의 의미는?",
+                options: [
+                    "AI가 학생의 개인정보를 유출하는 해킹 현상",
+                    "AI가 사실과 다른 정보를 그럴듯하게 생성하는 현상",
+                    "AI가 질문의 의도를 파악하지 못해 답변을 멈추는 현상",
+                    "프롬프트 입력 글자 수가 초과되어 에러가 발생하는 현상"
+                ],
+                answer: 1,
+                explanation: "할루시네이션은 환각이라는 뜻으로, AI가 잘못된 정보나 허구의 내용을 마치 사실인 것처럼 그럴듯하게 생성해내는 오류를 말합니다."
+            },
+            {
+                category: "우수 상담 사례 클리닉",
+                question: "사례 3의 '수학을 포기하고 싶어 하는 화학공학과 희망생'을 위한 컨설팅 방향으로 가장 적절한 것은?",
+                options: [
+                    "수학이 필요 없는 다른 문과 계열 학과로 즉시 진로를 변경하도록 유도한다.",
+                    "화학공학에 수학이 필수적임을 알리고, 1등급 과목부터 성취감을 쌓아 자신감을 회복하게 한다.",
+                    "수학 내신을 포기하고 정시 수능에만 올인하라고 조언한다.",
+                    "수학 성적이 오를 때까지 다른 모든 과목의 학습을 중단시킨다."
+                ],
+                answer: 1,
+                explanation: "화학공학에서 수학의 중요성을 인지시키되, 하락한 성적에 좌절하지 않도록 잘하는 과목에서 '작은 성공'을 경험하게 하여 전체 학업 동기를 끌어올려야 합니다."
+            },
+            {
+                category: "우수 상담 사례 클리닉",
+                question: "사례 4의 '문과에서 이과로 진로를 변경하며 일반고 전학을 고민하는 외고 학생'에게 가장 우선적으로 확인/지원해야 할 사항은?",
+                options: [
+                    "전학 갈 일반고의 내신 커트라인 분석",
+                    "이과 수학 선행학습 학원 등록",
+                    "수능 정시 최저 등급 맞추기 전략",
+                    "학생의 무너진 자존감과 정서 회복"
+                ],
+                answer: 3,
+                explanation: "단순 성적 하락에 의한 회피인지 진정한 목표 변경인지 파악하는 동시에, 진로 의사결정 이전에 학생의 심리/정서 회복을 우선적으로 지원해야 합니다."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedAnswers = new Array(quizData.length).fill(null);
+        let answeredCorrectly = new Array(quizData.length).fill(null);
+
+        // DOM Elements
+        const introScreen = document.getElementById('intro-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const questionCounter = document.getElementById('question-counter');
+        const questionCategory = document.getElementById('question-category');
+        const progressBar = document.getElementById('progress-bar');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const resultBtn = document.getElementById('result-btn');
+        const explanationBox = document.getElementById('explanation-box');
+        const explanationTitle = document.getElementById('explanation-title');
+        const explanationText = document.getElementById('explanation-text');
+        const scoreDisplay = document.getElementById('score-display');
+        const currentScoreSpan = document.getElementById('current-score');
+
+        function startQuiz() {
+            introScreen.classList.remove('active');
+            quizScreen.classList.add('active');
+            scoreDisplay.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = quizData[currentQuestion];
+            questionCounter.innerText = `문제 ${currentQuestion + 1} / ${quizData.length}`;
+            questionCategory.innerText = q.category;
+            questionText.innerText = q.question;
+            progressBar.style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            explanationBox.classList.add('hidden');
+
+            // Handle Buttons
+            prevBtn.classList.toggle('hidden', currentQuestion === 0);
+            
+            // Generate options
+            q.options.forEach((opt, index) => {
+                const isAnswered = selectedAnswers[currentQuestion] !== null;
+                const isSelected = selectedAnswers[currentQuestion] === index;
+                const isCorrectAns = index === q.answer;
+                
+                let optionStyle = '';
+                let iconHtml = '';
+
+                if (isAnswered) {
+                    if (isCorrectAns) {
+                        optionStyle = 'correct-answer border-2';
+                        iconHtml = '<i class="fas fa-check-circle mr-2"></i>';
+                    } else if (isSelected && !isCorrectAns) {
+                        optionStyle = 'wrong-answer border-2';
+                        iconHtml = '<i class="fas fa-times-circle mr-2"></i>';
+                    } else {
+                        optionStyle = 'opacity-50';
+                    }
+                }
+
+                const optHtml = `
+                    <label class="relative block cursor-pointer group">
+                        <input type="radio" name="option" value="${index}" class="peer sr-only" 
+                            ${isSelected ? 'checked' : ''} 
+                            ${isAnswered ? 'disabled' : ''}
+                            onchange="selectOption(${index})">
+                        <div class="option-label border border-gray-300 rounded-xl p-4 text-gray-700 bg-white shadow-sm flex items-center ${optionStyle}">
+                            <span class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold mr-4 shrink-0 group-hover:border-indigo-400 peer-checked:border-white">
+                                ${String.fromCharCode(65 + index)}
+                            </span>
+                            <span class="text-base">${iconHtml} ${opt}</span>
+                        </div>
+                    </label>
+                `;
+                optionsContainer.insertAdjacentHTML('beforeend', optHtml);
+            });
+
+            // Show explanation if already answered
+            if (selectedAnswers[currentQuestion] !== null) {
+                showExplanation();
+                updateNavButtons();
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-50');
+            }
+        }
+
+        function selectOption(index) {
+            if (selectedAnswers[currentQuestion] !== null) return; // Prevent changing answer
+            
+            selectedAnswers[currentQuestion] = index;
+            const q = quizData[currentQuestion];
+            const isCorrect = index === q.answer;
+            answeredCorrectly[currentQuestion] = isCorrect;
+
+            if (isCorrect) {
+                score++;
+                currentScoreSpan.innerText = score;
+            }
+
+            // Rerender to show correct/wrong styles
+            loadQuestion(); 
+        }
+
+        function showExplanation() {
+            const q = quizData[currentQuestion];
+            const isCorrect = answeredCorrectly[currentQuestion];
+
+            explanationBox.classList.remove('hidden', 'bg-green-50', 'border-green-500', 'bg-red-50', 'border-red-500');
+            explanationTitle.classList.remove('text-green-800', 'text-red-800');
+
+            if (isCorrect) {
+                explanationBox.classList.add('bg-green-50', 'border-green-500');
+                explanationTitle.classList.add('text-green-800');
+                explanationTitle.innerHTML = '<i class="fas fa-check-circle mr-2"></i> 정답입니다!';
+            } else {
+                explanationBox.classList.add('bg-red-50', 'border-red-500');
+                explanationTitle.classList.add('text-red-800');
+                explanationTitle.innerHTML = '<i class="fas fa-times-circle mr-2"></i> 오답입니다.';
+            }
+
+            explanationText.innerHTML = `<strong>해설:</strong> ${q.explanation}`;
+        }
+
+        function updateNavButtons() {
+            if (currentQuestion === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                resultBtn.classList.remove('hidden');
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-50', 'hidden');
+                resultBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.remove('active');
+            resultScreen.classList.add('active');
+            scoreDisplay.classList.add('hidden');
+
+            document.getElementById('final-score').innerText = score;
+            const resultMessage = document.getElementById('result-message');
+            const resultIcon = document.getElementById('result-icon');
+
+            if (score >= 18) {
+                resultMessage.innerText = "탁월합니다! 연수 자료를 완벽하게 숙지하셨습니다.";
+                resultIcon.innerHTML = '<i class="fas fa-trophy"></i>';
+                resultIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto text-5xl mb-6 bg-yellow-100 text-yellow-500";
+            } else if (score >= 14) {
+                resultMessage.innerText = "훌륭합니다! 고교학점제와 상담 기법에 대한 이해도가 높습니다.";
+                resultIcon.innerHTML = '<i class="fas fa-medal"></i>';
+                resultIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto text-5xl mb-6 bg-blue-100 text-blue-500";
+            } else if (score >= 10) {
+                resultMessage.innerText = "좋습니다! 다만 몇 가지 개념은 교재를 다시 확인해보시면 좋겠습니다.";
+                resultIcon.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+                resultIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto text-5xl mb-6 bg-green-100 text-green-500";
+            } else {
+                resultMessage.innerText = "아쉽습니다. 안내서를 다시 한 번 꼼꼼히 읽어보시기를 권장합니다.";
+                resultIcon.innerHTML = '<i class="fas fa-book-reader"></i>';
+                resultIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto text-5xl mb-6 bg-gray-100 text-gray-500";
+            }
+        }
+    </script>
+</body>
+</html>
+```eof
+
+요청하신 연수 자료의 핵심 내용을 바탕으로 총 20문항의 인터랙티브 웹 퀴즈를 단일 HTML 파일로 생성했습니다. 다운로드하여 웹 브라우저에서 실행하시면 문제 풀이부터 즉각적인 정답 확인, 해설, 그리고 최종 점수 채점까지 모두 동작합니다. 즐겁게 복습해 보시길 바랍니다!
